@@ -1,6 +1,7 @@
 import { Config } from './../config/config';
 import { UsersService } from './users.service';
 import { Body, Controller, Get, Post } from '@nestjs/common';
+import { CreateUserDto } from './dto/users.dto';
 
 @Controller(`${Config.adminPath}/users`)
 export class UsersController {
@@ -12,7 +13,7 @@ export class UsersController {
   }
 
   @Post()
-  async create(@Body() param) {
+  async create(@Body() param: CreateUserDto) {
     const newParam = { ...param, status: true };
     await this.usersService.create(newParam);
     return true;
