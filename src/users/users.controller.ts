@@ -1,7 +1,8 @@
+import { Config } from './../config/config';
 import { UsersService } from './users.service';
 import { Body, Controller, Get, Post } from '@nestjs/common';
 
-@Controller('users')
+@Controller(`${Config.adminPath}/users`)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
