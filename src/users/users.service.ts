@@ -1,4 +1,5 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { hashSync } from 'bcryptjs';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Connection, getRepository, Repository } from 'typeorm';
 import { UsersEntity } from './users.entity';
@@ -11,27 +12,37 @@ export class UsersService {
     private connection: Connection,
   ) {}
 
-  async findAll(): Promise<UsersEntity[]> {
+  async findAll() {
     return await this.usersRepository.find({ relations: ['photos'] });
   }
 
-  async create(user): Promise<UsersEntity[]> {
+  async findOne(username) {
+    const u = await getRepository(UsersEntity).findOne({ where: { username } });
+    if (!u) {
+      throw new BadRequestException({ code: 400, msg: '找不到用户' })
+    }
+    return u
+  }
+
+  async update(id, user) {
+    return await this.usersRepository.update(id , { ...user, password: hashSync(user.password) })
+  }
+
+  async delete(id) {
+    return await this.usersRepository.delete(id);
+  }
+
+  async create(user) {
     const { username } = user;
     const u = await getRepository(UsersEntity).findOne({ where: { username } });
 
     if (u) {
-      throw new HttpException(
-        {
-          message: 'Input data validation failed',
-          error: 'name must be unique',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
+      throw new BadRequestException({ code: 400, msg: '用户已经注册' })
     }
-    return await this.usersRepository.save(user);
+    return await this.usersRepository.save({ ...user, password: hashSync(user.password) });
   }
 
-  async createMany(users: UsersEntity[]) {
+  async createMany(users) {
     const queryRunner = this.connection.createQueryRunner();
 
     await queryRunner.connect();
@@ -43,8 +54,10 @@ export class UsersService {
 
       await queryRunner.commitTransaction();
     } catch (err) {
+      //如果遇到错误，可以回滚事务
       await queryRunner.rollbackTransaction();
     } finally {
+      //你需要手动实例化并部署一个queryRunner
       await queryRunner.release();
     }
   }

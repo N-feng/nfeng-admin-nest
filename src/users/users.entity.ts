@@ -13,6 +13,12 @@ export class UsersEntity {
   password: string;
 
   @Column()
+  mobile: string;
+
+  @Column()
+  email: string;
+
+  @Column()
   status: boolean;
 
   @OneToMany(() => PhotoEntity, (photo) => photo.user)
